@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scikit-learn-deployment-demo-api
+  labels:
+    app: scikit-learn-deployment-demo-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: scikit-learn-deployment-demo-api
+  template:
+    metadata:
+      labels:
+        app: scikit-learn-deployment-demo-api
+    spec:
+      volumes:
+        - name: google-cloud-key
+          secret:
+            secretName: service-account-key
+      containers:
+        - name: backend
+          image: soumyadipdutta2007/scikit-learn-demo-api:latest
+          imagePullPolicy: Always
+          resources:
+            requests:
+              memory: "2048Mi"
+              cpu: "2000m"
+            limits:
+              memory: "4096Mi"
+              cpu: "4000m"
+          volumeMounts:
+            - name: google-cloud-key
+              mountPath: /var/secrets/google
+          env:
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /var/secrets/google/key.json
+          ports:
+            - containerPort: 8000
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: scikit-learn-deployment-demo-api-svc
+  labels:
+    app: scikit-learn-deployment-demo-api-svc
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 8000
+      targetPort: 8000
+  selector:
+    app: scikit-learn-deployment-demo-api
